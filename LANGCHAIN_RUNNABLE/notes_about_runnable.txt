@@ -1,0 +1,56 @@
+1. Introduction & Context [00:00]
+Topic: This video covers the internal workings of LangChain. To truly understand how "Chains" function under the hood, you must master the concept of Runnables.
+
+Goal: By the end of the video, you will have a deep, fundamental understanding of LangChain's architecture and why it was designed the way it is today.
+
+2. The Evolution of LangChain (The "Why") [03:18]
+LangChain evolved in stages as the AI landscape grew post-ChatGPT (late 2022).
+
+Stage 1: API Standardization: When different companies (OpenAI, Anthropic, Google) released their LLM APIs, they all had different formats. LangChain built unified classes so developers could easily swap out one LLM for another.
+
+Stage 2: Components: Building a real-world app (like a PDF reader/RAG) involves much more than just querying an LLM. It requires loading documents, splitting text, generating embeddings, and semantic searching. LangChain built individual Components (Document Loaders, Text Splitters, Vector Stores, Retrievers) for each of these tasks. [06:49]
+
+3. The Birth of "Chains" [15:43]
+LangChain developers noticed common patterns. For example, in almost every app, you create a Prompt and pass it to an LLM.
+
+The Idea: Instead of engineers manually formatting prompts and calling LLMs, LangChain automated this by creating built-in functions called Chains (e.g., LLMChain, RetrievalQAChain).
+
+Chains significantly reduced boilerplate code, making LangChain highly popular. [23:03]
+
+4. The Problem: "Too Many Chains" [26:37]
+LangChain started creating new Chains for every specific usecase (SimpleSequentialChain, APIChain, LLMMathChain, etc.). This caused major issues:
+
+Bloated Codebase: It became too heavy and difficult for the LangChain team to maintain.
+
+Steep Learning Curve: New developers were confused about which Chain to use for which scenario.
+
+The Root Cause: The original components (LLMs, Prompts, Retrievers) were not standardized. To use an LLM, you called .predict(); for a Prompt, you called .format(); for a Retriever, you called .get_relevant_documents(). Because they had different interfaces, they couldn't naturally connect. LangChain had to write custom manual code (Chains) to glue them together. [30:06]
+
+5. The Solution: Runnables (The "What") [33:34]
+To fix the architecture, LangChain rebuilt its components to follow a standard set of rules. This standardized component is called a Runnable. Think of Runnables exactly like Lego Blocks! [37:33]
+
+Unit of Work: Every Runnable takes an input, processes it, and gives an output.
+
+Common Interface: All Runnables share the exact same methods. The most important one is .invoke(). (They also have .batch() and .stream()). [34:43]
+
+Seamless Connection: Because every component uses .invoke(), you can easily connect R1 → R2 → R3. The output of R1 automatically becomes the input for R2. [35:53]
+
+Composability: When you connect multiple Runnables to form a workflow, that resulting workflow is itself a Runnable. You can connect entire chains to other chains easily. [36:47]
+
+6. Building Runnables from Scratch (The "How") [39:37]
+To prove the concept, the instructor codes a mock LangChain architecture in Python:
+
+Step 1: Creates a dummy NakliLLM class and NakliPromptTemplate class.
+
+Step 2: Demonstrates how inflexible standard chains are by writing a manual NakliLLMChain connector. [48:33]
+
+Step 3 (The Fix): Creates an Abstract Base Class (ABC) called Runnable containing an abstract method .invoke(). [54:46]
+
+Step 4: Forces the Mock LLM and Mock Prompt classes to inherit from Runnable. This forces them to implement the .invoke() method. [56:39]
+
+Step 5: Creates a RunnableConnector class. Since every component now has an .invoke() method, this connector simply takes a list of Runnables, loops through them, and passes the output of one .invoke() to the input of the next. [59:53]
+
+Result: By standardizing the interface, developers can effortlessly string together Prompts, LLMs, and Parsers, or even link an entire "Joke Generator" Chain directly into a "Joke Explainer" Chain without any custom chain functions. [01:07:19]
+
+7. Conclusion [01:13:45]
+The instructor shows the actual LangChain open-source code on GitHub. If you inspect models like ChatOpenAI, you will see it inherits from BaseChatModel → BaseLanguageModel → RunnableSerializable → Runnable. At the core of the LangChain library sits the same abstract .invoke() method coded in the tutorial!
